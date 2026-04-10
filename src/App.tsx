@@ -1,261 +1,160 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'motion/react';
-import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
-interface TribeStats {
-  before: string;
-  after: string;
-  loss: string;
-}
+/* ─── Types ─────────────────────────────────────────────── */
+interface TribeStats { before: string; after: string; loss: string; }
 
-interface BaseSlide {
-  id: string;
-  type: string;
-}
+type SlideData =
+  | { id: string; type: 'hero';       title: string; subtitle: string; eyebrow: string; quote: string; image: string; description?: string }
+  | { id: string; type: 'dashboard';  title: string; subtitle: string; stats: { label: string; value: string; detail: string }[]; description: string }
+  | { id: string; type: 'bio';        name: string; title: string; description: string; image: string; quote: string }
+  | { id: string; type: 'map';        name: string; location: string; historical: string; current: string; stats: TribeStats; description: string; imageHistorical: string; imageCurrent: string; accent: string; color: string }
+  | { id: string; type: 'process';    title: string; subtitle: string; steps: { title: string; desc: string }[]; image: string }
+  | { id: string; type: 'conclusion'; title: string; subtitle: string; description: string; links: { label: string; url: string }[] };
 
-interface HeroSlideData extends BaseSlide {
-  type: 'hero';
-  title: string;
-  subtitle: string;
-  eyebrow: string;
-  quote: string;
-  image: string;
-  description?: string;
-}
-
-interface DashboardStat {
-  label: string;
-  value: string;
-  detail: string;
-}
-
-interface ProcessStep {
-  title: string;
-  desc: string;
-}
-
-interface MaterialItem {
-  title: string;
-  desc: string;
-}
-
-interface ConclusionLink {
-  label: string;
-  url: string;
-}
-
-interface DashboardSlideData extends BaseSlide {
-  type: 'dashboard';
-  title: string;
-  subtitle: string;
-  stats: DashboardStat[];
-  description: string;
-}
-
-interface BioSlideData extends BaseSlide {
-  type: 'bio';
-  title: string;
-  name: string;
-  description: string;
-  image: string;
-  quote: string;
-}
-
-interface MapSlideData extends BaseSlide {
-  type: 'map';
-  name: string;
-  location: string;
-  historical: string;
-  current: string;
-  stats: TribeStats;
-  description: string;
-  imageHistorical: string;
-  imageCurrent: string;
-  accent: string;
-}
-
-interface ProcessSlideData extends BaseSlide {
-  type: 'process';
-  title: string;
-  subtitle: string;
-  steps: ProcessStep[];
-  image: string;
-}
-
-interface MaterialsSlideData extends BaseSlide {
-  type: 'materials';
-  title: string;
-  subtitle: string;
-  items: MaterialItem[];
-  image: string;
-}
-
-interface ConclusionSlideData extends BaseSlide {
-  type: 'conclusion';
-  title: string;
-  subtitle: string;
-  description: string;
-  links: ConclusionLink[];
-}
-
-type SlideData = 
-  | HeroSlideData 
-  | DashboardSlideData 
-  | BioSlideData 
-  | MapSlideData 
-  | ProcessSlideData 
-  | MaterialsSlideData 
-  | ConclusionSlideData;
-
-const tribes: SlideData[] = [
+/* ─── Slides Data ────────────────────────────────────────── */
+const slides: SlideData[] = [
   {
-    id: 'intro',
-    type: 'hero',
-    title: 'Varal de Mapas',
-    subtitle: 'Indígenas',
+    id: 'intro', type: 'hero',
+    title: 'Varal de Mapas', subtitle: 'Indígenas',
     eyebrow: 'Uma Instalação Visual e Interativa',
     quote: '"O espectador não lê sobre a perda — ele a experimenta."',
-    image: 'https://images.unsplash.com/photo-1501491505116-440d1e5621d9?auto=format&fit=crop&q=80&w=2000',
-    description: 'Um projeto interdisciplinar baseado na obra de Ailton Krenak.'
+    image: 'https://images.unsplash.com/photo-1501491505116-440d1e5621d9?auto=format&fit=crop&q=80&w=1200',
+    description: 'Um projeto baseado na obra de Ailton Krenak.'
   },
   {
-    id: 'global-status',
-    type: 'dashboard',
-    title: 'O Placar da Terra',
-    subtitle: 'Situação das Terras Indígenas no Brasil',
+    id: 'global-status', type: 'dashboard',
+    title: 'O Placar da Terra', subtitle: 'Situação das Terras Indígenas no Brasil',
     stats: [
       { label: 'Total de Terras', value: '829', detail: 'Em diferentes fases' },
       { label: 'Homologadas', value: '539', detail: 'Regularizadas' },
       { label: 'Em Identificação', value: '163', detail: 'Em estudo pela FUNAI' },
       { label: 'Declaradas', value: '71', detail: 'Pelo Min. da Justiça' },
       { label: 'Identificadas', value: '41', detail: 'Relatório aprovado' },
-      { label: 'Encaminhadas RI', value: '15', detail: 'Reservas Indígenas' }
+      { label: 'Encaminhadas RI', value: '15', detail: 'Reservas Indígenas' },
     ],
-    description: 'A demarcação é um processo longo e tortuoso. Cada número aqui representa uma luta secular pela sobrevivência e pelo reconhecimento jurídico do território.'
+    description: 'Cada número representa uma luta secular pela sobrevivência e pelo reconhecimento jurídico do território.'
   },
   {
-    id: 'krenak-bio',
-    type: 'bio',
-    name: 'Ailton Krenak',
-    title: 'Ideias para Adiar o Fim do Mundo',
+    id: 'krenak-bio', type: 'bio',
+    name: 'Ailton Krenak', title: 'Ideias para Adiar o Fim do Mundo',
     description: 'Líder indígena, escritor e filósofo. Sua obra questiona o conceito colonial de progresso e denuncia o apagamento sistemático dos povos originários.',
-    image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=1200',
+    image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800',
     quote: '"A terra não é um recurso, é nossa própria extensão."'
   },
   {
-    id: 'environment',
-    type: 'hero',
-    title: 'Escudos da Vida',
-    subtitle: 'Proteção Ambiental',
-    eyebrow: 'O Impacto Ecológico',
-    quote: '"Terras Indígenas são as áreas mais conservadas do Brasil."',
-    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=2000',
-    description: 'A demarcação não é apenas um direito humano, é uma estratégia vital para o equilíbrio climático do planeta.'
+    id: 'krenak-map', type: 'map',
+    name: 'Krenak', location: 'Vale do Rio Doce, MG',
+    historical: 'Território Ancestral', current: 'Reserva Homologada',
+    stats: { before: '148.000 km²', after: '40 km²', loss: '99,9%' },
+    description: 'O povo Krenak viveu às margens do Rio Doce por milênios. Após o desastre da Samarco em 2015, o rio — chamado de Watu — foi declarado morto.',
+    imageHistorical: '/maps/Mapa_Krenak_Antes.png',
+    imageCurrent: '/maps/Mapa_Krenak_Depois.png',
+    accent: '#b45309', color: '#fde68a'
   },
   {
-    id: 'krenak-map',
-    type: 'map',
-    name: 'Krenak',
-    location: 'Vale do Rio Doce, MG',
-    historical: 'Território Ancestral',
-    current: 'Reserva Homologada',
-    stats: { before: '148.000 km²', after: '40 km²', loss: '99.9%' },
-    description: 'O povo Krenak viveu às margens do Rio Doce por milênios. Após séculos de pressão, resta uma reserva mínima.',
-    imageHistorical: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=1200',
-    imageCurrent: 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&q=80&w=1200',
-    accent: 'bg-amber-700'
+    id: 'guarani-map', type: 'map',
+    name: 'Guarani Kaiowá', location: 'Cone Sul, MS',
+    historical: 'Território Ancestral', current: 'Reserva Homologada',
+    stats: { before: '350.000 km²', after: '480 km²', loss: '99,8%' },
+    description: 'Ocuparam o Mato Grosso do Sul por séculos. Hoje têm a maior taxa de suicídio entre povos indígenas do Brasil — resultado direto do confinamento e da perda territorial.',
+    imageHistorical: '/maps/Mapa_Guarani_Antes.png',
+    imageCurrent: '/maps/Mapa_Guarani_Depois.png',
+    accent: '#065f46', color: '#6ee7b7'
   },
   {
-    id: 'guarani-map',
-    type: 'map',
-    name: 'Guarani Kaiowá',
-    location: 'Cone Sul, MS',
-    historical: 'Território Ancestral',
-    current: 'Reserva Homologada',
-    stats: { before: '350.000 km²', after: '480 km²', loss: '99.8%' },
-    description: 'Ocuparam o cone sul do Mato Grosso do Sul por séculos. Hoje enfrentam constantes conflitos fundiários.',
-    imageHistorical: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&q=80&w=1200',
-    imageCurrent: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&q=80&w=1200',
-    accent: 'bg-emerald-800'
-  },
-  {
-    id: 'yanomami-map',
-    type: 'map',
-    name: 'Yanomami',
-    location: 'Amazonas / Roraima',
-    historical: 'Território Ancestral',
-    current: 'Terra Demarcada',
+    id: 'yanomami-map', type: 'map',
+    name: 'Yanomami', location: 'Amazonas / Roraima',
+    historical: 'Território Ancestral', current: 'Terra Demarcada',
     stats: { before: '420.000 km²', after: '96.650 km²', loss: '77%' },
-    description: 'O maior povo indígena em isolamento relativo da Amazônia. A invasão garimpeira ameaça sua existência.',
-    imageHistorical: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=1200',
-    imageCurrent: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200',
-    accent: 'bg-green-900'
+    description: 'O maior povo em isolamento relativo da Amazônia. A invasão garimpeira entre 2019–2023 causou crise humanitária: crianças morrendo de desnutrição e malária.',
+    imageHistorical: '/maps/Mapa_Yanomami_Antes.png',
+    imageCurrent: '/maps/Mapa_Yanomami_Depois.png',
+    accent: '#14532d', color: '#86efac'
   },
   {
-    id: 'pataxo-map',
-    type: 'map',
-    name: 'Pataxó',
-    location: 'Costa do Descobrimento, BA',
-    historical: 'Território Ancestral',
-    current: 'Reserva Homologada',
-    stats: { before: '44.000 km²', after: '86 km²', loss: '99.8%' },
-    description: 'Habitavam toda a costa do descobrimento. Hoje restam fragmentos de terra no sul da Bahia.',
-    imageHistorical: 'https://images.unsplash.com/photo-1505144808419-1957a94ca61e?auto=format&fit=crop&q=80&w=1200',
-    imageCurrent: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&q=80&w=1200',
-    accent: 'bg-red-800'
+    id: 'pataxo-map', type: 'map',
+    name: 'Pataxó', location: 'Costa do Descobrimento, BA',
+    historical: 'Território Ancestral', current: 'Reserva Homologada',
+    stats: { before: '44.000 km²', after: '86 km²', loss: '99,8%' },
+    description: 'Habitavam toda a costa do descobrimento — os primeiros a ver as caravelas em 1500. Hoje restam fragmentos de terra no sul da Bahia.',
+    imageHistorical: '/maps/Mapa_Pataxo_Antes.png',
+    imageCurrent: '/maps/Mapa_Pataxo_Depois.png',
+    accent: '#7f1d1d', color: '#fca5a5'
   },
   {
-    id: 'process',
-    type: 'process',
-    title: 'O Gesto do Apagamento',
-    subtitle: 'Como acontece a demarcação?',
+    id: 'kayapo-map', type: 'map',
+    name: 'Kayapó', location: 'Pará / Mato Grosso',
+    historical: 'Território Ancestral', current: 'Terra Homologada',
+    stats: { before: '600.000 km²', after: '114.000 km²', loss: '81%' },
+    description: 'Em 1989, o cacique Raoni liderou mobilização global contra a Usina de Belo Monte — tornando-se símbolo da luta indígena. A floresta que protegem é visível do espaço.',
+    imageHistorical: '/maps/Mapa_Kayapo_Antes.png',
+    imageCurrent: '/maps/Mapa_Kayapo_Depois.png',
+    accent: '#1e3a5f', color: '#93c5fd'
+  },
+  {
+    id: 'munduruku-map', type: 'map',
+    name: 'Munduruku', location: 'Rio Tapajós, PA',
+    historical: 'Território Ancestral', current: 'Em Demarcação',
+    stats: { before: '180.000 km²', after: '2.382 km²', loss: '98,7%' },
+    description: 'Chamam o Rio Tapajós de "pai". A construção de hidrelétricas ameaça submergir territórios sagrados. Sua demarcação permanece travada há décadas.',
+    imageHistorical: '/maps/Mapa_Munduruku_Antes.png',
+    imageCurrent: '/maps/Mapa_Munduruku_Depois.png',
+    accent: '#44403c', color: '#d6d3d1'
+  },
+  {
+    id: 'xavante-map', type: 'map',
+    name: 'Xavante', location: 'Mato Grosso',
+    historical: 'Território Ancestral', current: 'Reserva Homologada',
+    stats: { before: '380.000 km²', after: '328 km²', loss: '99,9%' },
+    description: 'Resistiram ao contato com o homem branco até 1946. Hoje vivem ilhados no Cerrado, cercados por monoculturas de soja que avançam sobre seus limites.',
+    imageHistorical: '/maps/Mapa_Xavante_Antes.png',
+    imageCurrent: '/maps/Mapa_Xavante_Depois.png',
+    accent: '#713f12', color: '#fcd34d'
+  },
+  {
+    id: 'tupinamba-map', type: 'map',
+    name: 'Tupinambá', location: 'Bahia / Maranhão',
+    historical: 'Território Ancestral', current: 'Em Demarcação',
+    stats: { before: '500.000 km²', after: '47 km²', loss: '99,9%' },
+    description: 'O primeiro povo a ter contato com os portugueses em 1500. Deram origem à Língua Geral — falada em todo o Brasil colonial. Hoje lutam para existir.',
+    imageHistorical: '/maps/Mapa_Tupinamba_Antes.png',
+    imageCurrent: '/maps/Mapa_Tupinamba_Depois.png',
+    accent: '#4a1942', color: '#e879f9'
+  },
+  {
+    id: 'process', type: 'process',
+    title: 'O Gesto do Apagamento', subtitle: 'Como acontece a demarcação?',
     steps: [
-      { title: 'Identificação', desc: 'Estudos antropológicos e históricos.' },
-      { title: 'Declaração', desc: 'Reconhecimento pelo Ministério da Justiça.' },
-      { title: 'Homologação', desc: 'Decreto assinado pela Presidência.' },
-      { title: 'Registro', desc: 'Escrituração em cartório e na União.' }
+      { title: 'Identificação', desc: 'Estudos antropológicos e históricos conduzidos pela FUNAI.' },
+      { title: 'Declaração', desc: 'Reconhecimento formal pelo Ministério da Justiça.' },
+      { title: 'Homologação', desc: 'Decreto assinado pela Presidência da República.' },
+      { title: 'Registro', desc: 'Escrituração em cartório e no patrimônio da União.' },
     ],
-    image: 'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?auto=format&fit=crop&q=80&w=1200'
+    image: 'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?auto=format&fit=crop&q=80&w=800'
   },
   {
-    id: 'materials',
-    type: 'materials',
-    title: 'A Matéria da Luta',
-    subtitle: 'Sustentabilidade e Gesto',
-    items: [
-      { title: 'PVC e PET', desc: 'Estrutura de baixo custo e reaproveitada.' },
-      { title: 'Areia e Terra', desc: 'O peso da realidade sobre a base.' },
-      { title: 'O Varal', desc: 'A instabilidade que simboliza a resistência.' }
-    ],
-    image: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200'
-  },
-  {
-    id: 'conclusion',
-    type: 'conclusion',
-    title: 'Adiar o Fim do Mundo',
-    subtitle: 'O que podemos fazer?',
-    description: 'Este projeto é um convite à reflexão e à ação. A preservação das terras indígenas é a preservação da vida e do futuro do planeta.',
+    id: 'conclusion', type: 'conclusion',
+    title: 'Adiar o Fim do Mundo', subtitle: 'O que podemos fazer?',
+    description: 'Este projeto é um convite à reflexão e à ação. Preservar as terras indígenas é preservar a vida e o futuro do planeta.',
     links: [
-      { label: 'ISA - Instituto Socioambiental', url: 'https://www.socioambiental.org' },
+      { label: 'ISA — Instituto Socioambiental', url: 'https://www.socioambiental.org' },
       { label: 'FUNAI', url: 'https://www.gov.br/funai' },
-      { label: 'Terras Indígenas no Brasil', url: 'https://terrasindigenas.org.br' }
+      { label: 'Terras Indígenas no Brasil', url: 'https://terrasindigenas.org.br' },
     ]
   }
 ];
 
-function ProgressIndicator({ current, total }: { current: number, total: number }) {
+/* ─── Progress Bar ────────────────────────────────────────── */
+function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex gap-1.5 p-3" role="progressbar" aria-valuenow={current} aria-valuemax={total - 1}>
+    <div className="fixed top-0 left-0 right-0 z-50 flex gap-[3px] px-3 pt-3">
       {Array.from({ length: total }).map((_, i) => (
-        <div key={i} className="h-1.5 flex-1 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
-          <motion.div 
-            className={`h-full bg-white ${i === current ? 'opacity-100' : 'opacity-40'}`}
-            animate={{ 
-              width: i <= current ? '100%' : '0%',
-              backgroundColor: i === current ? '#ffffff' : '#ffffff66'
-            }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-            aria-current={i === current ? 'step' : undefined}
+        <div key={i} className="h-[3px] flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.2)' }}>
+          <motion.div
+            className="h-full rounded-full bg-white"
+            animate={{ width: i <= current ? '100%' : '0%', opacity: i === current ? 1 : 0.65 }}
+            transition={{ duration: i === current ? 0.35 : 0, ease: 'easeOut' }}
           />
         </div>
       ))}
@@ -263,555 +162,479 @@ function ProgressIndicator({ current, total }: { current: number, total: number 
   );
 }
 
-const slideVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 }
-};
+/* ─── Map Comparison Slider ──────────────────────────────── */
+function MapCompare({ before, after, beforeLabel, afterLabel }: {
+  before: string; after: string; beforeLabel: string; afterLabel: string;
+}) {
+  const [pct, setPct] = useState(62);
+  const ref = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
 
-function HeroSlide({ item, active, index }: { item: HeroSlideData, active: boolean, index: number }) {
+  const calc = useCallback((clientX: number) => {
+    if (!ref.current) return;
+    const { left, width } = ref.current.getBoundingClientRect();
+    setPct(Math.min(94, Math.max(6, ((clientX - left) / width) * 100)));
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => { if (dragging.current) calc(e.clientX); };
+    const onUp = () => { dragging.current = false; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [calc]);
+
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, scale: 1.1 }}
-        animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 1.1 }}
-        transition={{ duration: 1.5 }}
-        className="absolute inset-0 -z-10"
+    <div
+      ref={ref}
+      className="relative w-full h-full select-none overflow-hidden"
+      style={{ touchAction: 'none' }}
+      onMouseDown={(e) => { e.preventDefault(); dragging.current = true; }}
+      onTouchStart={(e) => { dragging.current = true; e.stopPropagation(); }}
+      onTouchMove={(e) => { if (dragging.current) { e.preventDefault(); e.stopPropagation(); calc(e.touches[0].clientX); } }}
+      onTouchEnd={() => { dragging.current = false; }}
+    >
+      {/* BEFORE */}
+      <img src={before} alt={beforeLabel} className="absolute inset-0 w-full h-full object-contain bg-zinc-900" loading="lazy" />
+      <div className="absolute top-3 left-3 z-10 pointer-events-none">
+        <span className="text-[9px] font-mono uppercase tracking-widest px-2 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.65)', color: '#fde68a' }}>{beforeLabel}</span>
+      </div>
+
+      {/* AFTER — clipped */}
+      <div className="absolute inset-0 overflow-hidden" style={{ left: `${pct}%` }}>
+        <div style={{ position: 'absolute', inset: 0, left: `-${pct}%`, width: '100%' }}>
+          <img src={after} alt={afterLabel} className="absolute inset-0 w-full h-full object-contain bg-zinc-800" loading="lazy" />
+        </div>
+      </div>
+      <div className="absolute top-3 right-3 z-10 pointer-events-none">
+        <span className="text-[9px] font-mono uppercase tracking-widest px-2 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.65)', color: '#fca5a5' }}>{afterLabel}</span>
+      </div>
+
+      {/* Divider */}
+      <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: `${pct}%`, transform: 'translateX(-50%)' }}>
+        <div className="w-[2px] h-full" style={{ background: 'rgba(255,255,255,0.85)' }} />
+        <div
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full flex items-center justify-center cursor-ew-resize pointer-events-auto shadow-xl"
+          style={{ background: 'white', left: '50%' }}
+          onMouseDown={(e) => { e.preventDefault(); dragging.current = true; }}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M6 9L3 6M3 6L6 3M3 6H15M12 9L15 12M15 12L12 15M15 12H3" stroke="#111" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Hint */}
+      <motion.p
+        className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] font-mono uppercase tracking-widest pointer-events-none whitespace-nowrap"
+        style={{ color: 'rgba(255,255,255,0.5)' }}
+        initial={{ opacity: 0.8 }}
+        animate={{ opacity: [0.8, 0, 0.8] }}
+        transition={{ duration: 2.5, repeat: 2, repeatDelay: 1 }}
       >
-        <img 
-          src={item.image} 
-          alt={item.title} 
-          className="w-full h-full object-cover brightness-50" 
-          referrerPolicy="no-referrer"
-          loading={index === 0 ? "eager" : "lazy"}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black" />
+        ← arraste →
+      </motion.p>
+    </div>
+  );
+}
+
+/* ─── Hero Slide ─────────────────────────────────────────── */
+function HeroSlide({ item, isFirst }: { item: Extract<SlideData, { type: 'hero' }>; isFirst: boolean }) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-center overflow-hidden">
+      <motion.div className="absolute inset-0" initial={{ scale: 1.08 }} animate={{ scale: 1 }} transition={{ duration: 2, ease: 'easeOut' }}>
+        <img src={item.image} alt="" className="w-full h-full object-cover" loading={isFirst ? 'eager' : 'lazy'} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.85) 100%)' }} />
       </motion.div>
-      
+
       <motion.div
-        variants={slideVariants}
-        initial="hidden"
-        animate={active ? "visible" : "hidden"}
-        transition={{ delay: 0.2, duration: 0.8 }}
-        className="space-y-6 md:space-y-8"
+        className="relative z-10 px-6 space-y-4 max-w-xs mx-auto"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.15 }}
       >
-        <span className="text-[10px] font-mono uppercase tracking-[0.6em] opacity-50">{item.eyebrow}</span>
-        <h2 className="text-4xl md:text-8xl lg:text-[12rem] font-bold leading-tight lg:leading-[0.8] tracking-tighter uppercase">
-          {item.title} <br />
-          <span className="font-display italic font-light text-white/30 lowercase">{item.subtitle}</span>
+        <p className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/45">{item.eyebrow}</p>
+        <h2 className="text-5xl font-black leading-[0.88] tracking-tighter uppercase text-white">
+          {item.title}<br />
+          <span className="font-light italic text-white/35 text-[2.2rem] normal-case">{item.subtitle}</span>
         </h2>
-        <p className="text-lg md:text-xl lg:text-2xl font-display italic opacity-70 max-w-2xl mx-auto px-4">
-          {item.quote}
-        </p>
+        <p className="text-[15px] font-light italic text-white/70 leading-relaxed">{item.quote}</p>
         {item.description && (
-          <p className="text-sm md:text-base opacity-40 max-w-md mx-auto mt-4 font-mono uppercase tracking-widest">
-            {item.description}
-          </p>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-white/30">{item.description}</p>
         )}
       </motion.div>
-      
-      {index === 0 && (
-        <motion.div 
-          animate={{ y: [0, 10, 0], opacity: active ? 1 : 0 }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
+
+      {isFirst && (
+        <motion.div
+          className="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          animate={{ y: [0, 8, 0], opacity: [0.4, 0.6, 0.4] }}
+          transition={{ repeat: Infinity, duration: 2.2 }}
         >
-          <div className="w-px h-8 md:h-12 bg-white/20" />
-          <span className="text-[10px] font-mono uppercase tracking-widest opacity-30">Role para iniciar</span>
+          <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.3)' }} />
+          <p className="text-[9px] font-mono uppercase tracking-[0.4em] text-white/35">toque para avançar</p>
         </motion.div>
       )}
     </div>
   );
 }
 
-function BioSlide({ item, active, index }: { item: BioSlideData, active: boolean, index: number }) {
+/* ─── Dashboard Slide ─────────────────────────────────────── */
+function DashboardSlide({ item }: { item: Extract<SlideData, { type: 'dashboard' }> }) {
   return (
-    <div className="min-h-[100dvh] w-full flex items-center justify-center p-6 md:p-24 bg-zinc-950">
-      <div className="max-w-7xl w-full grid md:grid-cols-2 gap-12 md:gap-24 items-center py-12">
-        <motion.div 
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: active ? 1 : 0, x: active ? 0 : -50 }}
-          transition={{ duration: 0.8 }}
-          className="relative aspect-[3/4] w-full max-w-sm mx-auto rounded-sm overflow-hidden shadow-2xl order-2 md:order-1"
-        >
-          <img 
-            src={item.image} 
-            alt={item.name} 
-            className="w-full h-full object-cover grayscale brightness-75" 
-            referrerPolicy="no-referrer"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-stone-900/20 mix-blend-overlay" />
-        </motion.div>
-        
-        <motion.div 
-          variants={slideVariants}
-          initial="hidden"
-          animate={active ? "visible" : "hidden"}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="space-y-8 md:space-y-12 order-1 md:order-2"
-        >
-          <div className="space-y-4 md:space-y-6">
-            <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/40">O Pensamento</span>
-            <h2 className="text-4xl md:text-6xl lg:text-8xl font-bold leading-tight">{item.name}</h2>
-            <p className="text-lg md:text-2xl font-display italic text-white/60">{item.title}</p>
-          </div>
-          <p className="text-base md:text-lg text-white/70 leading-relaxed max-w-lg">
-            {item.description}
-          </p>
-          <blockquote className="text-lg md:text-2xl font-display italic border-l-2 border-white/20 pl-6 md:pl-8 py-2">
-            {item.quote}
-          </blockquote>
-        </motion.div>
+    <div className="absolute inset-0 flex flex-col justify-center bg-zinc-950 px-5 py-16 overflow-y-auto">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} className="mb-6">
+        <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/30 mb-2">{item.subtitle}</p>
+        <h2 className="text-4xl font-black tracking-tighter text-white leading-tight">{item.title}</h2>
+      </motion.div>
+
+      <div className="grid grid-cols-2 gap-px" style={{ background: 'rgba(255,255,255,0.07)' }}>
+        {item.stats.map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 + i * 0.07 }}
+            className="bg-black p-5"
+          >
+            <p className="text-[9px] font-mono uppercase tracking-widest text-white/30 mb-2">{stat.label}</p>
+            <p className="text-4xl font-black tracking-tighter text-white">{stat.value}</p>
+            <p className="text-[10px] text-white/30 mt-1">{stat.detail}</p>
+          </motion.div>
+        ))}
       </div>
+
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}
+        className="mt-5 text-sm text-white/40 italic leading-relaxed">
+        {item.description}
+      </motion.p>
     </div>
   );
 }
 
-function MapSlide({ tribe, active, index }: { tribe: MapSlideData, active: boolean, index: number }) {
-  const [isFlipped, setIsFlipped] = useState(false);
-
-  useEffect(() => {
-    if (!active) setIsFlipped(false);
-  }, [active]);
-
+/* ─── Bio Slide ───────────────────────────────────────────── */
+function BioSlide({ item }: { item: Extract<SlideData, { type: 'bio' }> }) {
   return (
-    <div className="relative w-full min-h-[100dvh] flex items-center justify-center p-6 md:p-12 overflow-hidden">
-      <div className="max-w-6xl w-full grid lg:grid-cols-2 gap-8 md:gap-12 items-center py-12">
-        <div className="space-y-6 md:space-y-8 z-10 order-2 lg:order-1">
-          <motion.div
-            variants={slideVariants}
-            initial="hidden"
-            animate={active ? "visible" : "hidden"}
-            transition={{ delay: 0.1 }}
-          >
-            <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/40">Cartografia Crítica</span>
-            <h2 className="text-4xl md:text-6xl lg:text-8xl font-bold text-white leading-tight mt-4">{tribe.name}</h2>
-            <p className="text-base md:text-xl font-display italic text-white/60 mt-4 md:mt-6">{tribe.location}</p>
-          </motion.div>
-
-          <motion.p 
-            variants={slideVariants}
-            initial="hidden"
-            animate={active ? "visible" : "hidden"}
-            transition={{ delay: 0.3 }}
-            className="text-white/70 text-base md:text-lg leading-relaxed max-w-md"
-          >
-            {tribe.description}
-          </motion.p>
-
-          <motion.div 
-            variants={slideVariants}
-            initial="hidden"
-            animate={active ? "visible" : "hidden"}
-            transition={{ delay: 0.5 }}
-            className="grid grid-cols-2 gap-4 md:gap-8 pt-6 md:pt-8 border-t border-white/10"
-          >
-            <div>
-              <p className="text-[10px] font-mono uppercase text-white/30">Original</p>
-              <p className="text-lg md:text-xl font-bold text-white">{tribe.stats.before}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-mono uppercase text-white/30">Perda</p>
-              <p className="text-lg md:text-xl font-bold text-red-500">{tribe.stats.loss}</p>
-            </div>
-          </motion.div>
-
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: active ? 1 : 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsFlipped(!isFlipped)}
-            aria-label={isFlipped ? 'Ver mapa ancestral' : 'Ver mapa atual'}
-            className={`flex items-center gap-4 px-6 md:px-8 py-3 md:py-4 rounded-full text-xs md:text-sm font-mono uppercase tracking-widest font-bold shadow-2xl transition-colors ${tribe.accent} text-white hover:brightness-110`}
-          >
-            <RefreshCw className={`w-4 h-4 transition-transform duration-700 ${isFlipped ? 'rotate-180' : ''}`} />
-            {isFlipped ? 'Ver Ancestral' : 'Ver Agora'}
-          </motion.button>
-        </div>
-
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 0.9 }}
-          className="relative aspect-square w-full max-w-sm md:max-w-md lg:max-w-none mx-auto perspective-2000 order-1 lg:order-2"
-        >
-          <motion.div 
-            className="w-full h-full relative preserve-3d"
-            animate={{ rotateY: isFlipped ? 180 : 0 }}
-            transition={{ duration: 1, ease: 'easeInOut' }}
-          >
-            {/* Front */}
-            <div className="absolute inset-0 backface-hidden bg-white p-4 shadow-2xl rounded-sm">
-              <img src={tribe.imageHistorical} alt={`Mapa ancestral de ${tribe.name}`} className="w-full h-full object-cover grayscale brightness-75" referrerPolicy="no-referrer" loading="lazy" />
-              <div className="absolute inset-0 bg-amber-900/20 mix-blend-multiply" />
-              <div className="absolute top-8 left-8 right-8 text-black">
-                <span className="text-[10px] font-mono uppercase tracking-widest opacity-40">Lado A</span>
-                <h3 className="text-2xl font-bold uppercase tracking-tighter">{tribe.historical}</h3>
-              </div>
-            </div>
-            {/* Back */}
-            <div className="absolute inset-0 backface-hidden rotate-y-180 bg-zinc-900 p-4 shadow-2xl rounded-sm">
-              <img src={tribe.imageCurrent} alt={`Mapa atual de ${tribe.name}`} className="w-full h-full object-cover opacity-50" referrerPolicy="no-referrer" loading="lazy" />
-              <div className="absolute inset-0 border-[20px] border-red-900/40 m-4 pointer-events-none" />
-              <div className="absolute top-8 left-8 right-8 text-white">
-                <span className="text-[10px] font-mono uppercase tracking-widest opacity-40">Lado B</span>
-                <h3 className="text-2xl font-bold uppercase tracking-tighter">{tribe.current}</h3>
-                <p className="text-xs mt-2 opacity-60">{tribe.stats.after}</p>
-              </div>
-            </div>
-          </motion.div>
-          
-          {/* Decorative Elements */}
-          <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
-        </motion.div>
+    <div className="absolute inset-0 flex flex-col bg-zinc-950 overflow-hidden">
+      <div className="relative flex-shrink-0" style={{ height: '52%' }}>
+        <motion.img
+          src={item.image} alt={item.name}
+          className="w-full h-full object-cover"
+          style={{ filter: 'grayscale(55%) brightness(0.62)' }}
+          initial={{ scale: 1.06 }} animate={{ scale: 1 }}
+          transition={{ duration: 1.8 }}
+          loading="lazy"
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 45%, #09090b 100%)' }} />
       </div>
 
-      {/* Background Parallax Image */}
-      <motion.div 
-        className="absolute inset-0 -z-10 opacity-20 scale-110"
-        animate={{ x: active ? [-20, 20] : 0, opacity: active ? 0.2 : 0 }}
-        transition={{ duration: 20, repeat: active ? Infinity : 0, repeatType: 'reverse' }}
+      <motion.div
+        className="flex-1 px-6 pb-20 pt-3 overflow-y-auto space-y-3"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
       >
-        <img src={tribe.imageHistorical} alt="" className="w-full h-full object-cover blur-md" referrerPolicy="no-referrer" loading="lazy" />
+        <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/30">O Pensamento</p>
+        <h2 className="text-4xl font-black tracking-tighter text-white">{item.name}</h2>
+        <p className="text-sm font-light italic text-white/50">{item.title}</p>
+        <p className="text-sm text-white/60 leading-relaxed">{item.description}</p>
+        <blockquote className="text-[15px] font-light italic text-white/75 border-l-2 border-white/18 pl-4 py-1">
+          {item.quote}
+        </blockquote>
       </motion.div>
     </div>
   );
 }
 
-function DashboardSlide({ item, active, index }: { item: DashboardSlideData, active: boolean, index: number }) {
+/* ─── Map Slide ───────────────────────────────────────────── */
+function MapSlide({ tribe }: { tribe: Extract<SlideData, { type: 'map' }> }) {
   return (
-    <div className="relative w-full min-h-[100dvh] flex items-center justify-center p-6 md:p-12 bg-zinc-950">
-      <div className="max-w-6xl w-full z-10 py-12">
-        <motion.div
-          variants={slideVariants}
-          initial="hidden"
-          animate={active ? "visible" : "hidden"}
-          className="mb-8 md:mb-16"
-        >
-          <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/40">{item.subtitle}</span>
-          <h2 className="text-4xl md:text-6xl lg:text-8xl font-bold text-white mt-4">{item.title}</h2>
-        </motion.div>
+    <div className="absolute inset-0 flex flex-col" style={{ background: '#050505' }}>
+      {/* Map compare — top 52% */}
+      <motion.div
+        className="relative flex-shrink-0"
+        style={{ height: '52%' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <MapCompare
+          before={tribe.imageHistorical}
+          after={tribe.imageCurrent}
+          beforeLabel={tribe.historical}
+          afterLabel={tribe.current}
+        />
+      </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-white/10 border border-white/10">
-          {item.stats.map((stat, i) => (
+      {/* Content — bottom 48% */}
+      <motion.div
+        className="flex-1 px-5 pt-4 pb-20 overflow-y-auto space-y-3"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 0.15 }}
+      >
+        <div>
+          <p className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: tribe.color, opacity: 0.65 }}>
+            Cartografia Crítica · {tribe.location}
+          </p>
+          <h2 className="text-4xl font-black tracking-tighter text-white leading-none">{tribe.name}</h2>
+        </div>
+
+        <p className="text-sm text-white/57 leading-relaxed">{tribe.description}</p>
+
+        <div className="grid grid-cols-3 gap-2 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div>
+            <p className="text-[9px] font-mono uppercase text-white/28 mb-1">Original</p>
+            <p className="text-sm font-bold text-white">{tribe.stats.before}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-mono uppercase text-white/28 mb-1">Hoje</p>
+            <p className="text-sm font-bold text-white">{tribe.stats.after}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-mono uppercase text-white/28 mb-1">Perda</p>
+            <p className="text-sm font-bold" style={{ color: '#f87171' }}>{tribe.stats.loss}</p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─── Process Slide ───────────────────────────────────────── */
+function ProcessSlide({ item }: { item: Extract<SlideData, { type: 'process' }> }) {
+  return (
+    <div className="absolute inset-0 flex flex-col overflow-hidden">
+      <div className="relative flex-shrink-0" style={{ height: '32%' }}>
+        <img src={item.image} alt="" className="w-full h-full object-cover brightness-50" loading="lazy" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 35%, white 100%)' }} />
+      </div>
+
+      <div className="flex-1 bg-white text-black px-6 pt-2 pb-20 overflow-y-auto">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} className="space-y-5">
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-black/30 mb-1">{item.subtitle}</p>
+            <h2 className="text-3xl font-black tracking-tighter leading-tight">{item.title}</h2>
+          </div>
+
+          {item.steps.map((step, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: active ? 1 : 0 }}
-              transition={{ delay: 0.1 + i * 0.05 }}
-              className="bg-black p-6 md:p-12 group hover:bg-white hover:text-black active:bg-white active:text-black transition-colors duration-500"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.12 + i * 0.1 }}
+              className="flex gap-4 items-start"
             >
-              <p className="text-[10px] font-mono uppercase tracking-widest opacity-40 group-hover:opacity-100 mb-4">{stat.label}</p>
-              <p className="text-3xl md:text-5xl lg:text-7xl font-bold mb-2 tracking-tighter">{stat.value}</p>
-              <p className="text-[10px] md:text-xs opacity-40 group-hover:opacity-60">{stat.detail}</p>
+              <span className="text-3xl font-black text-black/8 leading-none pt-0.5 shrink-0 w-8">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <div>
+                <h3 className="text-[15px] font-black uppercase tracking-tight">{step.title}</h3>
+                <p className="text-sm text-black/50 leading-relaxed">{step.desc}</p>
+              </div>
             </motion.div>
           ))}
-        </div>
-
-        <motion.p
-          variants={slideVariants}
-          initial="hidden"
-          animate={active ? "visible" : "hidden"}
-          transition={{ delay: 0.5 }}
-          className="mt-8 md:mt-12 text-white/50 text-base md:text-lg max-w-2xl font-display italic"
-        >
-          {item.description}
-        </motion.p>
-      </div>
-
-      {/* Background Grid */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-    </div>
-  );
-}
-
-function ProcessSlide({ item, active, index }: { item: ProcessSlideData, active: boolean, index: number }) {
-  return (
-    <div className="relative w-full min-h-[100dvh] flex items-center justify-center p-6 md:p-12 bg-white text-black">
-      <div className="max-w-7xl w-full grid lg:grid-cols-2 gap-8 lg:gap-24 items-center z-10 py-12">
-        <div className="space-y-6 md:space-y-12">
-          <motion.div
-            variants={slideVariants}
-            initial="hidden"
-            animate={active ? "visible" : "hidden"}
-            transition={{ duration: 0.8 }}
-          >
-            <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-black/40">{item.subtitle}</span>
-            <h2 className="text-3xl md:text-6xl lg:text-8xl font-bold leading-tight mt-2 md:mt-4">{item.title}</h2>
-          </motion.div>
-
-          <div className="space-y-4 md:space-y-8">
-            {item.steps.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: active ? 1 : 0, x: active ? 0 : -20 }}
-                transition={{ delay: 0.2 + i * 0.1 }}
-                className="flex gap-4 md:gap-8 items-start group"
-              >
-                <span className="text-xl md:text-4xl font-bold opacity-10 group-hover:opacity-100 transition-opacity">{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <h3 className="text-base md:text-xl font-bold uppercase tracking-tight">{step.title}</h3>
-                  <p className="text-xs md:text-base text-black/60">{step.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 0.9 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="relative aspect-[4/5] rounded-sm overflow-hidden shadow-2xl mt-8 lg:mt-0"
-        >
-          <img src={item.image} alt="Processo de demarcação" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
-          <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
         </motion.div>
-      </div>
-      
-      {/* Decorative vertical line */}
-      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-black/5 -translate-x-1/2 hidden lg:block" />
-    </div>
-  );
-}
-
-function MaterialsSlide({ item, active, index }: { item: MaterialsSlideData, active: boolean, index: number }) {
-  return (
-    <div className="relative w-full min-h-[100dvh] flex items-center justify-center p-6 md:p-12 bg-zinc-900">
-      <div className="max-w-7xl w-full grid lg:grid-cols-2 gap-8 lg:gap-24 items-center z-10 py-12">
-        <motion.div
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 1.1 }}
-          transition={{ duration: 1 }}
-          className="relative aspect-square rounded-full overflow-hidden border-4 md:border-8 border-white/5 shadow-2xl max-w-[280px] md:max-w-none mx-auto"
-        >
-          <img src={item.image} alt="Materiais da instalação" className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" loading="lazy" />
-          <div className="absolute inset-0 bg-amber-900/20 mix-blend-multiply" />
-        </motion.div>
-
-        <div className="space-y-6 md:space-y-12">
-          <motion.div
-            variants={slideVariants}
-            initial="hidden"
-            animate={active ? "visible" : "hidden"}
-            transition={{ duration: 0.8 }}
-          >
-            <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/40">{item.subtitle}</span>
-            <h2 className="text-3xl md:text-6xl lg:text-8xl font-bold text-white mt-2 md:mt-4">{item.title}</h2>
-          </motion.div>
-
-          <div className="grid gap-3 md:gap-8">
-            {item.items.map((mat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: active ? 1 : 0, x: active ? 0 : 20 }}
-                transition={{ delay: 0.2 + i * 0.1 }}
-                className="p-3 md:p-6 border-l-2 border-white/10 hover:border-white transition-colors group"
-              >
-                <h3 className="text-base md:text-xl font-bold text-white group-hover:text-amber-500 transition-colors uppercase tracking-tight">{mat.title}</h3>
-                <p className="text-xs md:text-base text-white/50 mt-1 md:mt-2">{mat.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
 }
 
-function ConclusionSlide({ item, active, index }: { item: ConclusionSlideData, active: boolean, index: number }) {
+/* ─── Conclusion Slide ────────────────────────────────────── */
+function ConclusionSlide({ item }: { item: Extract<SlideData, { type: 'conclusion' }> }) {
   return (
-    <div className="relative w-full min-h-[100dvh] flex flex-col items-center justify-center p-6 md:p-12 bg-black text-center">
-      <div className="max-w-4xl z-10 py-12">
-        <motion.div
-          variants={slideVariants}
-          initial="hidden"
-          animate={active ? "visible" : "hidden"}
-          transition={{ duration: 1 }}
-          className="space-y-6 md:space-y-8"
-        >
-          <span className="text-[10px] font-mono uppercase tracking-[0.6em] text-white/40">{item.subtitle}</span>
-          <h2 className="text-5xl md:text-6xl lg:text-[10rem] font-bold leading-tight lg:leading-[0.8] tracking-tighter uppercase text-white">
-            {item.title}
-          </h2>
-          <p className="text-lg md:text-2xl lg:text-3xl font-display italic text-white/70 max-w-2xl mx-auto leading-relaxed">
-            {item.description}
-          </p>
-        </motion.div>
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-center px-6 py-20 overflow-y-auto">
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(20,83,45,0.35) 0%, transparent 65%)' }} />
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: active ? 1 : 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-12 md:mt-24 flex flex-wrap justify-center gap-4 md:gap-8"
-        >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.75 }}
+        className="relative z-10 space-y-6 max-w-xs mx-auto"
+      >
+        <p className="text-[10px] font-mono uppercase tracking-[0.5em] text-white/30">{item.subtitle}</p>
+        <h2 className="text-5xl font-black tracking-tighter uppercase leading-[0.85] text-white">{item.title}</h2>
+        <p className="text-[15px] font-light italic text-white/55 leading-relaxed">{item.description}</p>
+
+        <div className="flex flex-col gap-3 mt-4">
           {item.links.map((link, i) => (
-            <a
+            <motion.a
               key={i}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] md:text-sm font-mono uppercase tracking-widest border border-white/20 px-6 md:px-8 py-3 md:py-4 rounded-full hover:bg-white hover:text-black active:bg-white active:text-black transition-all"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 + i * 0.1 }}
+              className="text-[11px] font-mono uppercase tracking-widest py-3 px-4 rounded-full text-white/60 border transition-all active:scale-95 active:bg-white active:text-black"
+              style={{ borderColor: 'rgba(255,255,255,0.14)' }}
             >
               {link.label}
-            </a>
+            </motion.a>
           ))}
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 
-      {/* Footer Branding */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-20 text-[10px] font-mono uppercase tracking-[0.5em]">
+      <p className="absolute bottom-7 text-[9px] font-mono uppercase tracking-[0.5em] text-white/18">
         Varal de Mapas · 2026
-      </div>
-      
-      {/* Background atmosphere */}
-      <div className="absolute inset-0 -z-10 opacity-30">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-green-950 to-transparent" />
-      </div>
+      </p>
     </div>
   );
 }
 
+/* ─── App ────────────────────────────────────────────────── */
 export default function App() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const touchStart = useRef<number | null>(null);
-  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [current, setCurrent] = useState(0);
+  const [dir, setDir] = useState<1 | -1>(1);
+  const touchX = useRef<number | null>(null);
+  const touchY = useRef<number | null>(null);
+  const lastNav = useRef(0);
+
+  const go = useCallback((next: number) => {
+    const now = Date.now();
+    if (now - lastNav.current < 350) return;
+    lastNav.current = now;
+    if (next < 0 || next >= slides.length) return;
+    setDir(next > current ? 1 : -1);
+    setCurrent(next);
+  }, [current]);
+
+  const goPrev = useCallback(() => go(current - 1), [current, go]);
+  const goNext = useCallback(() => go(current + 1), [current, go]);
 
   useEffect(() => {
-    const options = {
-      root: containerRef.current,
-      threshold: 0.5,
+    const fn = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') goNext();
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') goPrev();
     };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const index = slideRefs.current.indexOf(entry.target as HTMLDivElement);
-          if (index !== -1) {
-            setCurrentSlide(index);
-          }
-        }
-      });
-    }, options);
-
-    slideRefs.current.forEach((slide) => {
-      if (slide) observer.observe(slide);
-    });
-
-    return () => observer.disconnect();
-  }, []);
+    window.addEventListener('keydown', fn);
+    return () => window.removeEventListener('keydown', fn);
+  }, [goNext, goPrev]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') goToSlide('down');
-      if (e.key === 'ArrowUp') goToSlide('up');
+    let wt = 0;
+    const fn = (e: WheelEvent) => {
+      if (Date.now() - wt < 700) return;
+      wt = Date.now();
+      if (e.deltaY > 20) goNext(); else if (e.deltaY < -20) goPrev();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [currentSlide]);
+    window.addEventListener('wheel', fn, { passive: true });
+    return () => window.removeEventListener('wheel', fn);
+  }, [goNext, goPrev]);
 
-  const goToSlide = (direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? currentSlide - 1 : currentSlide + 1;
-    if (targetIndex >= 0 && targetIndex < tribes.length) {
-      slideRefs.current[targetIndex]?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const slide = slides[current];
+  const isMap = slide.type === 'map';
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStart.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStart.current === null) return;
-    const touchEnd = e.changedTouches[0].clientY;
-    const diff = touchStart.current - touchEnd;
-
-    if (Math.abs(diff) > 50) {
-      goToSlide(diff > 0 ? 'down' : 'up');
-    }
-    touchStart.current = null;
+  const variants = {
+    enter: (d: number) => ({ y: d > 0 ? '100%' : '-100%', opacity: 0 }),
+    center: { y: 0, opacity: 1 },
+    exit: (d: number) => ({ y: d > 0 ? '-100%' : '100%', opacity: 0 }),
   };
 
   return (
-    <div 
-      className="h-[100dvh] bg-black text-white selection:bg-white selection:text-black overflow-hidden" 
-      role="main"
+    <div
+      className="fixed inset-0 bg-black text-white overflow-hidden"
+      style={{ userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}
+      onTouchStart={(e) => { touchX.current = e.touches[0].clientX; touchY.current = e.touches[0].clientY; }}
+      onTouchEnd={(e) => {
+        if (!touchX.current || !touchY.current) return;
+        const dx = e.changedTouches[0].clientX - touchX.current;
+        const dy = e.changedTouches[0].clientY - touchY.current;
+        if (!isMap && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 55) {
+          if (dy < 0) goNext(); else goPrev();
+        }
+        touchX.current = null; touchY.current = null;
+      }}
     >
-      <ProgressIndicator current={currentSlide} total={tribes.length} />
-      
-      {/* Navigation Overlay */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-4">
-        <button 
-          onClick={() => goToSlide('up')}
-          aria-label="Slide anterior"
-          className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center bg-black/40 hover:bg-white hover:text-black active:bg-white active:text-black transition-all backdrop-blur-md disabled:opacity-20 disabled:cursor-not-allowed"
-          disabled={currentSlide === 0}
-        >
-          <ChevronUp className="w-6 h-6" />
-        </button>
-        <button 
-          onClick={() => goToSlide('down')}
-          aria-label="Próximo slide"
-          className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center bg-black/40 hover:bg-white hover:text-black active:bg-white active:text-black transition-all backdrop-blur-md disabled:opacity-20 disabled:cursor-not-allowed"
-          disabled={currentSlide === tribes.length - 1}
-        >
-          <ChevronDown className="w-6 h-6" />
-        </button>
-      </div>
+      <ProgressBar current={current} total={slides.length} />
 
       {/* Branding */}
-      <div className="fixed top-8 left-8 z-50 mix-blend-difference">
-        <h1 className="text-xl font-bold tracking-tighter uppercase">Varal de Mapas</h1>
+      <div className="fixed top-8 left-4 z-50 mix-blend-difference pointer-events-none">
+        <p className="text-[11px] font-black tracking-tighter uppercase text-white opacity-75">Varal de Mapas</p>
       </div>
 
-      {/* Main Content */}
-      <div 
-        ref={containerRef}
-        className="h-full overflow-y-auto snap-y snap-mandatory no-scrollbar scroll-smooth"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        {tribes.map((item, i) => (
-          <div 
-            key={item.id} 
-            ref={el => slideRefs.current[i] = el}
-            className="min-h-full w-full snap-start relative"
+      {/* Counter */}
+      <div className="fixed top-8 right-4 z-50 pointer-events-none">
+        <p className="text-[10px] font-mono text-white/25">{current + 1} / {slides.length}</p>
+      </div>
+
+      {/* Slides */}
+      <AnimatePresence custom={dir} initial={false}>
+        <motion.div
+          key={slide.id}
+          custom={dir}
+          variants={variants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.42, ease: [0.32, 0.72, 0, 1] }}
+          className="absolute inset-0"
+        >
+          {/* Instagram-style tap zones (not on map slides — map has its own touch handling) */}
+          {!isMap && (
+            <>
+              <div className="absolute inset-y-0 left-0 w-1/3 z-40" onClick={goPrev} />
+              <div className="absolute inset-y-0 right-0 w-2/3 z-40" onClick={goNext} />
+            </>
+          )}
+          {/* Map slides: tap zones only in the bottom text area */}
+          {isMap && (
+            <>
+              <div className="absolute bottom-0 left-0 right-0 z-40" style={{ height: '48%' }} onClick={goNext} />
+            </>
+          )}
+
+          {slide.type === 'hero'       && <HeroSlide      item={slide} isFirst={current === 0} />}
+          {slide.type === 'dashboard'  && <DashboardSlide item={slide} />}
+          {slide.type === 'bio'        && <BioSlide       item={slide} />}
+          {slide.type === 'map'        && <MapSlide       tribe={slide} />}
+          {slide.type === 'process'    && <ProcessSlide   item={slide} />}
+          {slide.type === 'conclusion' && <ConclusionSlide item={slide} />}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Bottom nav */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+        {current > 0 && (
+          <button
+            onClick={goPrev}
+            className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}
+            aria-label="Anterior"
           >
-            {item.type === 'hero' && (
-              <HeroSlide item={item} active={currentSlide === i} index={i} />
-            )}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 11L7 3M7 3L4 6M7 3L10 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
 
-            {item.type === 'dashboard' && (
-              <DashboardSlide item={item} active={currentSlide === i} index={i} />
-            )}
+        <div className="flex items-center gap-1.5">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => go(i)}
+              className="rounded-full transition-all duration-300 active:scale-90"
+              style={{
+                width: i === current ? 18 : 5,
+                height: 5,
+                background: i === current ? 'white' : 'rgba(255,255,255,0.28)',
+              }}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
 
-            {item.type === 'bio' && (
-              <BioSlide item={item} active={currentSlide === i} index={i} />
-            )}
-
-            {item.type === 'map' && (
-              <MapSlide tribe={item} active={currentSlide === i} index={i} />
-            )}
-
-            {item.type === 'process' && (
-              <ProcessSlide item={item} active={currentSlide === i} index={i} />
-            )}
-
-            {item.type === 'materials' && (
-              <MaterialsSlide item={item} active={currentSlide === i} index={i} />
-            )}
-
-            {item.type === 'conclusion' && (
-              <ConclusionSlide item={item} active={currentSlide === i} index={i} />
-            )}
-          </div>
-        ))}
+        {current < slides.length - 1 && (
+          <button
+            onClick={goNext}
+            className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}
+            aria-label="Próximo"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 3L7 11M7 11L4 8M7 11L10 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
